@@ -1,31 +1,6 @@
-from numpy import array, dot
 from random import uniform
 from math import e
-
-my_training_set_inputs = array([[0, 0, 1],
-                                [1, 1, 1],
-                                [1, 0, 1],
-                                [0, 1, 1]])
-
-my_training_set_outputs = array([   [0],
-                                    [1],
-                                    [1],
-                                    [0]])
-
-my_synaptic_weights = array([[uniform(-1.0, 1.0)] for i in range(3)])
-
-def sigmoid(x):
-    return 1 / (1 + (e ** -x))
-
-my_output = sigmoid(dot(my_training_set_inputs, my_synaptic_weights))
-
-for i in range(100):
-    my_synaptic_weights += dot(my_training_set_inputs.T, my_training_set_outputs - my_output * (1 - my_output))
-
-new_input = array([[1, 0, 0]])
-
-
-print(sigmoid(dot(new_input, my_synaptic_weights)))
+from copy import deepcopy
 
 class Matrix(list):
     def __repr__(self):
@@ -36,7 +11,7 @@ class Matrix(list):
                 self[index1][index2] = -value2
         return self
     def template(self, other, act):
-        new_matrix = Matrix(self.copy())
+        new_matrix = deepcopy(self)
         if isinstance(other, (int, float)):
             for index1, value1 in enumerate(self):
                 for index2, value2 in enumerate(value1):
@@ -50,7 +25,7 @@ class Matrix(list):
                 raise TypeError('matrices of different sizes cannot be multiplied in this way')
         return new_matrix
     def rtemplate(self, other, act):
-        new_matrix = Matrix(self.copy())
+        new_matrix = deepcopy(self)
         if isinstance(other, (int, float)):
             for index1, value1 in enumerate(self):
                 for index2, value2 in enumerate(value1):
@@ -67,6 +42,9 @@ class Matrix(list):
         from operator import mul
         return self.template(other, mul)
     def __add__(self, other):
+        from operator import add
+        return self.template(other, add)
+    def __iadd__(self, other):
         from operator import add
         return self.template(other, add)
     def __radd__(self, other):
@@ -98,3 +76,36 @@ def Z(inputs, weights):
             result += value2 * weights[index2][0]
         new_matrix.append([result])
     return new_matrix
+
+def adjust_the_weights(coup_input, intermediate_result):
+    new_matrix = Matrix([])
+    for index1, value1 in enumerate(coup_input):
+        result = 0
+        for index2, value2 in enumerate(value1):
+            result += value2 * intermediate_result[index2][0]
+        new_matrix.append([result])
+    return new_matrix
+
+
+training_set_inputs = Matrix([  [0, 0, 1],
+                                [1, 1, 1],
+                                [1, 0, 1],
+                                [0, 1, 1]])
+
+training_set_outputs = Matrix([ [0],
+                                [1],
+                                [1],
+                                [0]])
+
+synaptic_weights = Matrix([[uniform(-1.0, 1.0)] for i in range(3)])
+
+def sigmoid(x):
+    return 1 / (1 + (e ** -x))
+
+output = sigmoid(Z(training_set_inputs, synaptic_weights))
+
+for i in range(20000):
+    synaptic_weights += adjust_the_weights(training_set_inputs.coup, training_set_outputs - output * (1 - output))
+
+new_input = Matrix([[1, 0, 0]])
+print(sigmoid(Z(new_input, synaptic_weights)))
