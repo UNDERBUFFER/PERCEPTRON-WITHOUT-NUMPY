@@ -10,31 +10,19 @@ class Matrix(list):
             for index2, value2 in enumerate(value1):
                 self[index1][index2] = -value2
         return self
-    def template(self, other, act):
+    def template(self, other, act, reverse=False):
         new_matrix = deepcopy(self)
         if isinstance(other, (int, float)):
             for index1, value1 in enumerate(self):
                 for index2, value2 in enumerate(value1):
-                    new_matrix[index1][index2] = act(value2, other)
+                    data = (value2, other) if not reverse else (other, value2)
+                    new_matrix[index1][index2] = act(*data)
         else:
             if (len(self), len(self[0])) == (len(other), len(other[0])):
                 for index1, value1 in enumerate(self):
                     for index2, value2 in enumerate(value1):
-                        new_matrix[index1][index2] = act(value2, other[index1][index2])
-            else:
-                raise TypeError('matrices of different sizes cannot be multiplied in this way')
-        return new_matrix
-    def rtemplate(self, other, act):
-        new_matrix = deepcopy(self)
-        if isinstance(other, (int, float)):
-            for index1, value1 in enumerate(self):
-                for index2, value2 in enumerate(value1):
-                    new_matrix[index1][index2] = act(other, value2)
-        else:
-            if (len(self), len(self[0])) == (len(other), len(other[0])):
-                for index1, value1 in enumerate(self):
-                    for index2, value2 in enumerate(value1):
-                        new_matrix[index1][index2] = act(other[index1][index2], value2)
+                        data = (value2, other[index1][index2]) if not reverse else (other[index1][index2], value2)
+                        new_matrix[index1][index2] = act(*data)
             else:
                 raise TypeError('matrices of different sizes cannot be multiplied in this way')
         return new_matrix
@@ -49,18 +37,18 @@ class Matrix(list):
         return self.template(other, add)
     def __radd__(self, other):
         from operator import add
-        return self.rtemplate(other, add) 
+        return self.template(other, add, reverse=True) 
     def __sub__(self, other):
         from operator import sub
         return self.template(other, sub)
     def __rtruediv__(self, other):
         from operator import truediv
-        return self.rtemplate(other, truediv)
+        return self.template(other, truediv, reverse=True)
     def __rsub__(self, other):
         from operator import sub
-        return self.rtemplate(other, sub)
+        return self.template(other, sub, reverse=True)
     def __rpow__(self, other):
-        return self.rtemplate(other, pow)
+        return self.template(other, pow, reverse=True)
     @property
     def coup(self):
         new_matrix = Matrix([[] for i in range(len(self[0]))])
